@@ -1,0 +1,4 @@
+https://cdn.v2ph.com/photos/1CsiUMY-8ConZqvq.jpg
+    out=img1.jpg
+https://cdn.v2ph.com/photos/LoleLyoqbJs5WHI8.jpg
+    out=img2.jpg
