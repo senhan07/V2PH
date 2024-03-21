@@ -7,8 +7,7 @@ import undetected_chromedriver as uc
 import random
 import os
 import json
-from module.update_token import update_token
-import pyautogui
+from module.token import update_token
 
 def login(driver):
     driver.get("https://www.v2ph.com/login")

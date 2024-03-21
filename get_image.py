@@ -3,11 +3,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-from datetime import datetime
 import os
 from module.login import login
 from module.download_image import download_images
-from module.history import history
+from module.history import update_history
 
 # Function to extract URLs from a page
 def extract_urls(driver):
@@ -36,13 +35,13 @@ def save_urls_to_file(urls, filename):
             filename = normalize_alt_text(alt)
             file.write(f"{url}\n    out={filename}.jpg\n")
 
-def get_image(driver):
-    # List all files in the "albums_url" folder
+def choose_album():
+        # List all files in the "albums_url" folder
     album_url_folder = "albums_url"
     album_files = [f for f in os.listdir(album_url_folder) if f.endswith(".txt")]
 
     # Prompt the user to choose a file
-    print("Select a file:")
+    print("\nSelect a file:")
     for i, file_name in enumerate(album_files):
         print(f"{i+1}. {file_name}")
 
@@ -56,6 +55,17 @@ def get_image(driver):
                 selected_index = None
         except ValueError:
             print("Invalid input. Please enter a number.")
+    return album_url_folder, album_files, selected_index
+
+
+def get_image(driver):
+    # TODO: SEPERATE CHOOSING ALBUMS URL TO A FUCTION
+    # TODO: ADD DEDUPLICATION WHEN GRABBED IMAGE URLS
+    
+    #! SELECT ALBUM URL FROM .TXT
+    album_url_folder, \
+    album_files, \
+    selected_index = choose_album()
 
     username = login(driver)
 
@@ -71,7 +81,7 @@ def get_image(driver):
                     title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
                     
                     # Check if the URL is already in history, if not save it
-                    history(target_url.strip(), username)
+                    update_history(target_url.strip(), username)
 
                     # Initialize a list to store all URLs
                     all_urls = []

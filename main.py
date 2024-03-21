@@ -1,11 +1,7 @@
 import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import os
 import json
-from module.update_token import reset_token
-from module.login import login
+from module.token import reset_token
 from scrape_album import scrape_album
 from get_image import get_image
 
@@ -14,16 +10,20 @@ from get_image import get_image
 # Wait for the page to load
 # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "email")))
 
+#! Reset all accounts token to 16 if the last accessed more than 12 hours with current time
 json_files = [f for f in os.listdir("accounts") if f.endswith(".json")]
 for json_file in json_files:
     credentials_file = os.path.join("accounts", json_file)
+    print(credentials_file)
     with open(credentials_file, 'r') as file:
         credentials = json.load(file)
+        print(credentials)
         reset_token(credentials, credentials_file)
 
+# TODO: MAKE THE CHROME ENGINE START AFTER FINISHING ALL THE INPUT CHOICE
+#! Input choice
 print("1. Scrapping album URLs based on Model Names")
 print("2. Get Image URLs from album URLs .txt")
-print("3. Download Images from URLs list using Aria2c")
 
 choice = input("Enter your choice: ")
 
