@@ -3,71 +3,71 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import undetected_chromedriver as uc
-import random
-import os
-import json
-from module.token import update_token
+import time
+from module.user import update_token, check_available_accounts, credentials
 
-def login(driver):
+def login_with_random_account():
+    # Check available username with token at least 1
+    all_username = check_available_accounts()
+    print(all_username)
+    # Sort username_token_pairs based on token value (highest to lowest)
+    all_username.sort(key=lambda x: x[1], reverse=True)
+
+    if not all_username:
+        print("Error: No more accounts with a token value greater than 0.")
+        return
+
+    # Get credentials of the account with the highest token value
+    username = all_username[0][0]
+    print(username)
+    return username
+
+def login(driver, username):
     driver.get("https://www.v2ph.com/login")
 
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "email")))
+    user_data = credentials(username)
+    email = user_data.get("Email")
+    username = user_data.get("Username")
+    password = user_data.get("Password")
+    token = user_data.get("Token")
 
-    # Get a list of JSON files in the accounts folder
-    json_files = [f for f in os.listdir("accounts") if f.endswith(".json")]
+    time.sleep(1)
+    # Find input elements and fill them with credentials
+    email_input = driver.find_element(By.ID, "email")
+    email_input.send_keys(email)
 
-    # Filter out JSON files where token value is 0
-    json_files = [f for f in json_files if not json.load(open(os.path.join("accounts", f))).get("Token") == "0"]
+    # For password, you might need to retrieve it from your backend or somewhere secure.
+    password_input = driver.find_element(By.ID, "password")
+    password_input.send_keys(password)
 
-    # Check if there are any JSON files left after filtering
-    if len(json_files) > 0:
-        # Choose a random JSON file
-        random_json_file = random.choice(json_files)
-        credentials_file = os.path.join("accounts", random_json_file)
+    print("\nTrying Login as:")
+    print(f"Email: {email}")
+    print(f"Username: {username}")
+    print(f"Password: {password}")
+    print(f"Last Token: {token}")
 
-        # Read credentials from the chosen JSON file
-        with open(credentials_file, 'r') as file:
-            credentials = json.load(file)
-            if credentials:
-                email = credentials.get("Email")
-                password = credentials.get("Password")
-                
-                # Find input elements and fill them with credentials
-                email_input = driver.find_element(By.ID, "email")
-                email_input.send_keys(email)
+    # Wait for a while to see the result
+    driver.implicitly_wait(5)
 
-                password_input = driver.find_element(By.ID, "password")
-                password_input.send_keys(password)
+    print("\nSolve CAPTCHA first, Press any key to continue...")
+    input()
+    print("Trying to login...")
 
-                print("\nLoaded Credentials as:")
-                print(f"Email: {email}")
-                print(f"Password: {password}")
-                
-                # Wait for a while to see the result
-                driver.implicitly_wait(5)
+    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
+    login_button.click()
 
-        print("\nSolve CAPTCHA first, Press any key to continue...")
-        input()
-        print("Trying to login...")
-
-        login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
-        login_button.click()
-
-        driver.get("https://www.v2ph.com/user/index")
-        if driver.current_url == "https://www.v2ph.com/user/index":
-            print("Login successful!")
-            update_token(driver, credentials, credentials_file)
-        else:
-            try:
-                error_message = driver.find_element(By.CLASS_NAME, "errorMessage").text
-                print(f"Login failed! Error: {error_message}")
-            except NoSuchElementException:
-                print("Login failed! Unable to retrieve error message.")
-
+    driver.get("https://www.v2ph.com/user/index")
+    if driver.current_url == "https://www.v2ph.com/user/index":
+        print("Login successful!")
+        # Update token only if login successful
+        update_token(driver, username)
     else:
-        print("Error: No more accounts with a token value greater than 0.")
-
+        try:
+            error_message = driver.find_element(By.CLASS_NAME, "errorMessage").text
+            print(f"Login failed! Error: {error_message}")
+        except NoSuchElementException:
+            print("Login failed! Unable to retrieve error message.")
+    return username
 
 def logout(driver):
     print("Trying to logout...")

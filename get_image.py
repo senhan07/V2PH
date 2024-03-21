@@ -1,12 +1,16 @@
 
+from lib2to3.pgen2 import driver
+from math import log
+from pdb import run
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import os
-from module.login import login
+from module.login import login, logout, login_with_random_account
 from module.download_image import download_images
-from module.history import update_history
+from module.history import check_history, visited_url
+from module.driver import run_engine
 
 # Function to extract URLs from a page
 def extract_urls(driver):
@@ -30,10 +34,12 @@ def normalize_alt_text(input):
 # Function to save URLs to a file with specified format
 def save_urls_to_file(urls, filename):
     os.makedirs('image_urls', exist_ok=True)
-    with open(f'image_urls/{filename}.txt', 'w') as file:
+    output_url = f"image_urls/{filename}.txt"
+    with open(f'{output_url}', 'w') as file:
         for url, alt in urls:
             filename = normalize_alt_text(alt)
             file.write(f"{url}\n    out={filename}.jpg\n")
+    print("Data saved to:", output_url)
 
 def choose_album():
         # List all files in the "albums_url" folder
@@ -41,7 +47,7 @@ def choose_album():
     album_files = [f for f in os.listdir(album_url_folder) if f.endswith(".txt")]
 
     # Prompt the user to choose a file
-    print("\nSelect a file:")
+    print("\nSelect a files:")
     for i, file_name in enumerate(album_files):
         print(f"{i+1}. {file_name}")
 
@@ -58,66 +64,103 @@ def choose_album():
     return album_url_folder, album_files, selected_index
 
 
-def get_image(driver):
-    # TODO: SEPERATE CHOOSING ALBUMS URL TO A FUCTION
+def get_image(album_url_folder, album_files, selected_index):
+    driver = run_engine()
     # TODO: ADD DEDUPLICATION WHEN GRABBED IMAGE URLS
-    
-    #! SELECT ALBUM URL FROM .TXT
-    album_url_folder, \
-    album_files, \
-    selected_index = choose_album()
-
-    username = login(driver)
 
     # Process the selected file
     selected_file = os.path.join(album_url_folder, album_files[selected_index])
     with open(selected_file, "r") as file:
         target_urls = file.readlines()
-        for target_url in target_urls:
-                    # Open the initial URL
-                    driver.get(target_url.strip())
+        
+        # Create a set to store usernames that have been used successfully
+        successful_usernames = set()
 
+        for target_url in target_urls:
+            target_url = target_url.strip()
+
+            #! Add the album url already exists or not
+            username = check_history(target_url.strip())
+
+            while True:
+                if username in successful_usernames:
+                    # If the username has been used successfully before, skip the login process
+                    print(f"Skipping login with username {username} as it has been used successfully before.")
+                else:
+                    # If the username has not been used successfully before, attempt login
+                    login(driver, username)
+                    if username:
+                        # If login was successful, add the username to the set of successful usernames
+                        successful_usernames.add(username)
+
+                # Open the initial URL
+                driver.get(target_url)
+
+                # Check if the account token has run out
+                if driver.current_url == "https://www.v2ph.com/user/upgrade":
+                    print("Out of token, switching to another account")
+                    logout(driver)
+                    # Remove the username from successful_usernames to prevent logging in with it again
+                    successful_usernames.remove(username)
+                    username = login_with_random_account()
+                else:
                     # Get the title for directory name
                     title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
-                    
-                    # Check if the URL is already in history, if not save it
-                    update_history(target_url.strip(), username)
 
-                    # Initialize a list to store all URLs
-                    all_urls = []
+                    break  # Exit the loop if token is valid
 
-                    page = 1
-                    while True:
-                        # Wait for the page to fully load
-                        wait = WebDriverWait(driver, 10)
-                        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "photos-list")))
+            # Get the title for directory name
+            title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+            
+            # Initialize a list to store all URLs
+            all_urls = []
 
-                        # Extract URLs from the current page and add them to the list
-                        current_urls = extract_urls(driver)
-                        all_urls.extend(current_urls)
+            page = 1
+            #! Starting individual page scrapping
+            while True:
+                while True:
+                    #! Check if the account token run out
+                    # Check if the account token has run out
+                    if driver.current_url == "https://www.v2ph.com/user/upgrade":
+                        print("Out of token, switching to another account")
+                        logout(driver)
+                        # Remove the username from successful_usernames to prevent logging in with it again
+                        successful_usernames.remove(username)
+                        username = login_with_random_account()
+                    else:
+                        # Get the title for directory name
+                        title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
 
-                        # Find the next page button and click it
-                        next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
-                        print(all_urls)
-                        print(f"Scraping page {page}")
-                        if next_button:
-                            next_button[0].click()
-                            page += 1
-                        else:
-                            print("Next button not found, end of the page")
-                            break  # If no next button found, break the loop
+                        break  # Exit the loop if token is valid
 
-                    album_title = normalize_alt_text(title)
-                    # Save the URLs to a file
-                    save_urls_to_file(all_urls, album_title)
+                visited_url(target_url, username)
+                # Wait for the page to fully load
+                wait = WebDriverWait(driver, 10)
+                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "photos-list")))
 
-                    output_dir = f'images/{title}'
+                # Extract URLs from the current page and add them to the list
+                current_urls = extract_urls(driver)
+                all_urls.extend(current_urls)
 
-                    print("Data saved to:", output_dir)
-                    print("Found:", len(all_urls), "Images")
+                # Find the next page button and click it
+                next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
 
-                    # Download images using aria2c
-                    download_images(output_dir, album_title, all_urls)
+                print(f"Scraping page {page}")
+                if next_button:
+                    next_button[0].click()
+                    page += 1
+                else:
+                    print("Next button not found, end of the page")
+                    break  # If no next button found, break the loop
+
+            album_title = normalize_alt_text(title)
+            # Save the URLs to a file
+            save_urls_to_file(all_urls, album_title)
+            print("Found:", len(all_urls), "Images")
+
+            output_download = f'images/{title}'
+            # Download images using aria2c
+            download_images(output_download, album_title)
 
     # Quit the driver
     driver.quit()
