@@ -10,16 +10,25 @@ from module.colors import GREEN, RED, YELLOW, RESET
 def login_with_random_account():
     # Check available username with token at least 1
     all_username = check_available_accounts()
-    # Sort username_token_pairs based on token value (highest to lowest)
-    all_username.sort(key=lambda x: x[1], reverse=True)
+    
+    # Separate usernames with "losenhan1" and others
+    losenhan1_accounts = [account for account in all_username if account[0] == "losenhan1"]
+    other_accounts = [account for account in all_username if account[0] != "losenhan1"]
+    
+    # Sort other accounts based on token value (highest to lowest)
+    other_accounts.sort(key=lambda x: x[1], reverse=True)
+    
+    # Combine "losenhan1" accounts and other accounts
+    prioritized_accounts = losenhan1_accounts + other_accounts
 
-    if not all_username:
+    if not prioritized_accounts:
         print(f"{RED}Error: No more accounts with a token value greater than 0.{RESET}")
         return
 
-    # Get credentials of the account with the highest token value
-    username = all_username[0][0]
+    # Get credentials of the account with the highest token value or "losenhan1" if available
+    username = prioritized_accounts[0][0]
     return username
+
 
 def login(driver, username):
     driver.get("https://www.v2ph.com/login")
