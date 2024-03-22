@@ -29,7 +29,7 @@ def login(driver, username):
     password = user_data.get("Password")
     token = user_data.get("Token")
 
-    time.sleep(3)
+    time.sleep(1)
     # Find input elements and fill them with credentials
     email_input = driver.find_element(By.ID, "email")
     email_input.send_keys(email)
@@ -51,7 +51,7 @@ def login(driver, username):
     input()
     print("Trying to login...")
 
-    time.sleep(3)
+    time.sleep(1)
     login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
     login_button.click()
 
