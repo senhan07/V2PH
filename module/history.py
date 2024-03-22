@@ -32,11 +32,11 @@ def visited_url(url, username):
             history[username].append(url)
             print("New Album viewed, Token decreased by 1")
             print(f"{url} added to history on user {username}")
-            user_info['Token'] = max(0, int(user_token) - 1)
+            user_info['Token'] = user_info['Token'] = str(max(0, int(user_token) - 1))
             write_user_info(username, user_info)
     else:
         history[username] = [url]
-        user_info['Token'] = max(0, int(user_token) - 1)
+        user_info['Token'] = user_info['Token'] = str(max(0, int(user_token) - 1))
         print("New Album viewed, Token decreased by 1")
         print(f"{url} added to history on user {username}")
         write_user_info(username, user_info)
