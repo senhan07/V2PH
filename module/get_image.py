@@ -160,11 +160,13 @@ def get_image(album_url_folder, album_files, selected_index):
                     print("Next button not found, end of the page")
                     break  # If no next button found, break the loop
 
+            album_title = normalize_alt_text(title)
+            
             # Add the URLs to the set for deduplication
             unique_urls.update(all_urls)
-
-            album_title = normalize_alt_text(title)
-            print("Found:", len(all_urls), "Images")
+            total_images = len(unique_urls)
+            
+            print("Found:", {total_images}, "Images")
             # Save the unique URLs to a file
             save_urls_to_file(unique_urls, album_title)
 
