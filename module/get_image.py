@@ -66,7 +66,9 @@ def choose_album():
 
 def get_image(album_url_folder, album_files, selected_index):
     driver = run_engine()
-    # TODO: ADD DEDUPLICATION WHEN GRABBED IMAGE URLS
+    
+    # Initialize a set to store unique URLs
+    unique_urls = set()
 
     # Process the selected file
     selected_file = os.path.join(album_url_folder, album_files[selected_index])
@@ -153,14 +155,17 @@ def get_image(album_url_folder, album_files, selected_index):
                     print("Next button not found, end of the page")
                     break  # If no next button found, break the loop
 
+            # Add the URLs to the set for deduplication
+            unique_urls.update(all_urls)
+
             album_title = normalize_alt_text(title)
-            # Save the URLs to a file
-            save_urls_to_file(all_urls, album_title)
             print("Found:", len(all_urls), "Images")
+            # Save the unique URLs to a file
+            save_urls_to_file(unique_urls, album_title)
 
             output_download = f'images/{title}'
             # Download images using aria2c
             download_images(output_download, album_title)
 
-    # Quit the driver
+        # Quit the driver
     driver.quit()
