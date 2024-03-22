@@ -9,7 +9,6 @@ from module.user import update_token, check_available_accounts, credentials
 def login_with_random_account():
     # Check available username with token at least 1
     all_username = check_available_accounts()
-    print(all_username)
     # Sort username_token_pairs based on token value (highest to lowest)
     all_username.sort(key=lambda x: x[1], reverse=True)
 
@@ -19,7 +18,6 @@ def login_with_random_account():
 
     # Get credentials of the account with the highest token value
     username = all_username[0][0]
-    print(username)
     return username
 
 def login(driver, username):
