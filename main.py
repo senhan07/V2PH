@@ -1,8 +1,8 @@
 import os
 import json
 from module.user import reset_token
-from scrape_album import scrape_album
-from get_image import get_image, choose_album
+from module.scrape_album import scrape_album
+from module.get_image import get_image, choose_album
 from module.driver import run_engine
 
 
