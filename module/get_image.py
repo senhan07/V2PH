@@ -32,13 +32,12 @@ def normalize_alt_text(input):
     return input
 
 # Function to save URLs to a file with specified format
-def save_urls_to_file(urls, filename):
+def save_urls_to_file(urls, album_title):
     os.makedirs('image_urls', exist_ok=True)
-    output_url = f"image_urls/{filename}.txt"
-    with open(f'{output_url}', 'w') as file:
-        for url, alt in urls:
-            filename = normalize_alt_text(alt)
-            file.write(f"{url}\n    out={filename}.jpg\n")
+    output_url = f"image_urls/{album_title}.txt"
+    with open(output_url, 'w', encoding='utf-8') as file:
+        for url, album_title in urls:
+            file.write(f"{url}\n    out={album_title}.jpg\n")
     print("Data saved to:", output_url)
 
 def choose_album():
@@ -81,6 +80,9 @@ def get_image(album_url_folder, album_files, selected_index):
         for target_url in target_urls:
             target_url = target_url.strip()
 
+            # Reset url set
+            unique_urls = set()
+
             #! Add the album url already exists or not
             username = check_history(target_url.strip())
 
@@ -112,7 +114,7 @@ def get_image(album_url_folder, album_files, selected_index):
                     break  # Exit the loop if token is valid
 
             # Get the title for directory name
-            title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+            # title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
             
             # Initialize a list to store all URLs
             all_urls = []
@@ -131,7 +133,7 @@ def get_image(album_url_folder, album_files, selected_index):
                         username = login_with_random_account()
                     else:
                         # Get the title for directory name
-                        title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+                        # title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
 
                         break  # Exit the loop if token is valid
 
@@ -143,6 +145,9 @@ def get_image(album_url_folder, album_files, selected_index):
                 # Extract URLs from the current page and add them to the list
                 current_urls = extract_urls(driver)
                 all_urls.extend(current_urls)
+                
+                # Get the title for directory name
+                # title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
 
                 # Find the next page button and click it
                 next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
@@ -163,7 +168,7 @@ def get_image(album_url_folder, album_files, selected_index):
             # Save the unique URLs to a file
             save_urls_to_file(unique_urls, album_title)
 
-            output_download = f'images/{title}'
+            output_download = f'images/{album_title}'
             # Download images using aria2c
             download_images(output_download, album_title)
 
