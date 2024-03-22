@@ -1,27 +1,63 @@
-import subprocess
 import os
 from tqdm import tqdm
+import subprocess
+from module.colors import GREEN, RED, YELLOW, RESET, CYAN
 
-# ANSI escape codes for colors
-GREEN = '\033[92m'
-RED = '\033[91m'
-YELLOW = '\033[33m'
-RESET = '\033[0m'
+# Function to choose an album file
+def choose_album():
+    image_url_folder = "image_urls"
+
+    # List all files in the "albums_url" folder
+    image_url_files = [f for f in os.listdir(image_url_folder) if f.endswith(".txt")]
+
+    # Display file list
+    print(f"\n{YELLOW}Select a file to download:{RESET}")
+    for i, file_name in enumerate(image_url_files):
+        print(f"{i+1}. {file_name}")
+
+    while True:
+        choice = input(f"{CYAN}Enter the number of the file (A for all): {RESET}").strip()
+        if choice.lower() == 'a':
+            return [os.path.join(image_url_folder, file) for file in image_url_files]
+        try:
+            index = int(choice)
+            if 1 <= index <= len(image_url_files):
+                return os.path.join(image_url_folder, image_url_files[index - 1])
+            else:
+                print(f"{RED}Invalid selection. Please enter a valid number or 'A' for all.{RESET}")
+        except ValueError:
+            print(f"{RED}Invalid input. Please enter a number or 'A' for all.{RESET}")
 
 # Function to download images using aria2c with tqdm progress bar
-def download_images(output_download, album_title):
+def download_images():
+    # Choose an album file or files
+    album_files = choose_album()
+
+    if isinstance(album_files, list):  # If multiple files selected
+        for album_file in album_files:
+            download_single_album(album_file)
+    else:
+        download_single_album(album_files)
+
+def download_single_album(album_file):
+    # Get the album title from the file name
+    album_title = os.path.splitext(os.path.basename(album_file))[0]
+
+    # Output directory
+    output_download = f'images/{album_title}'
     os.makedirs(output_download, exist_ok=True)
-    
+
     # Count the total number of lines in the input file to set the total number of downloads for tqdm
-    total_lines = sum(1 for line in open(f"image_urls/{album_title}.txt")) // 2
-    
+    total_lines = sum(1 for line in open(album_file)) // 2
+
+
     # Set up tqdm progress bar with speed indicator and unit "image"
     with tqdm(total=total_lines, desc=f"{GREEN}[DOWNLOADING]{RESET} {YELLOW}{album_title}{RESET}", unit="image", dynamic_ncols=True) as pbar:
         # List to store URLs that encounter errors
         error_urls = []
-        
+
         # Run aria2c command with subprocess
-        process = subprocess.Popen(["aria2c", "-i", f"image_urls/{album_title}.txt", "-j", "12", "--retry-wait=15", "--max-tries=10", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, universal_newlines=True)
+        process = subprocess.Popen(["aria2c", "-i", album_file, "-j", "12", "--retry-wait=15", "--max-tries=10", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, universal_newlines=True)
 
         # Read stdout line by line
         for stdout_line in process.stdout:
@@ -38,6 +74,6 @@ def download_images(output_download, album_title):
         # If any URLs encountered errors, you can handle them here
         # if error_urls:
         #     print("\nHandling error URLs...")
-            # You can choose to retry downloading these URLs or handle them in any other way
-            
+        #     You can choose to retry downloading these URLs or handle them in any other way
+
     pbar.close()
