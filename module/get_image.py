@@ -38,26 +38,39 @@ def save_urls_to_file(urls, album_title):
     print(f"{GREEN}Data saved to:{RESET}", output_url)
 
 def choose_album():
-        # List all files in the "albums_url" folder
+    print(f"{YELLOW}Select a files:{RESET}")
     album_url_folder = "albums_url"
     album_files = [f for f in os.listdir(album_url_folder) if f.endswith(".txt")]
 
-    # Prompt the user to choose a file
-    print(f"\n{YELLOW}Select a files:{RESET}")
     for i, file_name in enumerate(album_files):
         print(f"{i+1}. {file_name}")
 
-    # Validate user input
+    selected_option = input(f"{CYAN}Enter the number of the files (I to enter URL manually): {RESET}")
+
+    if selected_option.upper() == 'I':
+        manual_url = input(f"{CYAN}Enter the URL: {RESET}")
+        return album_url_folder, manual_url, None
+    
     selected_index = None
     while selected_index is None:
         try:
-            selected_index = int(input(f"{CYAN}Enter the number of the files: {RESET}")) - 1
+            selected_index = int(selected_option) - 1
             if selected_index < 0 or selected_index >= len(album_files):
                 print(f"{RED}Invalid selection. Please enter a valid number.{RESET}")
+                selected_option = input(f"{CYAN}Enter the number of the files (I to enter URL manually): {RESET}")
+                if selected_option.upper() == 'I':
+                    manual_url = input(f"{CYAN}Enter the URL: {RESET}")
+                    return manual_url
                 selected_index = None
         except ValueError:
-            print(f"{RED}Invalid input. Please enter a number.{RESET}")
+            print(f"{RED}Invalid selection. Please enter a valid number.{RESET}")
+            selected_option = input(f"{CYAN}Enter the number of the files (I to enter URL manually): {RESET}")
+            if selected_option.upper() == 'I':
+                manual_url = input(f"{CYAN}Enter the URL: {RESET}")
+                return manual_url
+    
     return album_url_folder, album_files, selected_index
+
 
 
 def get_image(album_url_folder, album_files, selected_index):
@@ -66,46 +79,74 @@ def get_image(album_url_folder, album_files, selected_index):
     # Initialize a set to store unique URLs
     unique_urls = set()
 
-    # Process the selected file
-    selected_file = os.path.join(album_url_folder, album_files[selected_index])
-    with open(selected_file, "r") as file:
-        target_urls = file.readlines()
-        
-        # Create a set to store usernames that have been used successfully
-        successful_usernames = set()
+    if selected_index is not None:
+        # Process the selected file
+        selected_file = os.path.join(album_url_folder, album_files[selected_index])
+        with open(selected_file, "r") as file:
+            target_urls = file.readlines()
+    else:
+        # User entered the URL manually
+        manual_url = album_files
+        target_urls = [manual_url]
+    
+    # Create a set to store usernames that have been used successfully
+    successful_usernames = set()
 
-        total_albums = len(target_urls)
-        current_album = 1
+    total_albums = len(target_urls)
+    current_album = 1
 
-        for target_url in target_urls:
-            target_url = target_url.strip()
+    for target_url in target_urls:
+        target_url = target_url.strip()
 
-            # Reset url set
-            unique_urls = set()
+        # Reset url set
+        unique_urls = set()
 
-            #! Add the album url already exists or not
-            username = check_history(target_url.strip())
+        #! Add the album url already exists or not
+        username = check_history(target_url.strip())
 
+        while True:
+            if username in successful_usernames:
+                # If the username has been used successfully before, skip the login process
+                print(f"{YELLOW}Skipping login with username {username} as it has been used successfully before.{RESET}")
+            else:
+                # If the username has not been used successfully before, attempt login
+                login(driver, username)
+                if username:
+                    # If login was successful, add the username to the set of successful usernames
+                    successful_usernames.add(username)
+
+            # Open the initial URL
+            driver.get(target_url)
+
+
+            # Check if the account token has run out
+            if driver.current_url == "https://www.v2ph.com/user/upgrade":
+                print(f"{YELLOW}Out of token, switching to another account{RESET}")
+                logout(driver)
+                # Remove the username from successful_usernames to prevent logging in with it again
+                successful_usernames.remove(username)
+                username = login_with_random_account()
+            else:
+                # Get the title for directory name
+                title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+
+                break  # Exit the loop if token is valid
+
+
+        # Print progress status
+        print(f"\n{YELLOW}Progress: ({current_album} of {total_albums}) albums{RESET}")
+        print(f"{YELLOW}Processing: {title}{RESET}")
+        # Increment the current album count
+        current_album += 1
+
+        # Initialize a list to store all URLs
+        all_urls = []
+
+        page = 1
+        #! Starting individual page scrapping
+        while True:
             while True:
-                if username in successful_usernames:
-                    # If the username has been used successfully before, skip the login process
-                    print(f"{YELLOW}Skipping login with username {username} as it has been used successfully before.{RESET}")
-                else:
-                    # If the username has not been used successfully before, attempt login
-                    login(driver, username)
-                    if username:
-                        # If login was successful, add the username to the set of successful usernames
-                        successful_usernames.add(username)
-
-                # Open the initial URL
-                driver.get(target_url)
-
-                # Print progress status
-                print(f"\n{YELLOW}Progress: ({current_album}/{total_albums}) albums{RESET}")
-
-                # Increment the current album count
-                current_album += 1
-
+                #! Check if the account token run out
                 # Check if the account token has run out
                 if driver.current_url == "https://www.v2ph.com/user/upgrade":
                     print(f"{YELLOW}Out of token, switching to another account{RESET}")
@@ -114,62 +155,41 @@ def get_image(album_url_folder, album_files, selected_index):
                     successful_usernames.remove(username)
                     username = login_with_random_account()
                 else:
-                    # Get the title for directory name
-                    title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
-
                     break  # Exit the loop if token is valid
 
-            # Initialize a list to store all URLs
-            all_urls = []
+            visited_url(target_url, username)
+            # Wait for the page to fully load
+            wait = WebDriverWait(driver, 10)
+            wait.until(EC.presence_of_element_located((By.CLASS_NAME, "photos-list")))
 
-            page = 1
-            #! Starting individual page scrapping
-            while True:
-                while True:
-                    #! Check if the account token run out
-                    # Check if the account token has run out
-                    if driver.current_url == "https://www.v2ph.com/user/upgrade":
-                        print(f"{YELLOW}Out of token, switching to another account{RESET}")
-                        logout(driver)
-                        # Remove the username from successful_usernames to prevent logging in with it again
-                        successful_usernames.remove(username)
-                        username = login_with_random_account()
-                    else:
-                        break  # Exit the loop if token is valid
-
-                visited_url(target_url, username)
-                # Wait for the page to fully load
-                wait = WebDriverWait(driver, 10)
-                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "photos-list")))
-
-                # Extract URLs from the current page and add them to the list
-                current_urls = extract_urls(driver)
-                all_urls.extend(current_urls)
-                
-                # Find the next page button and click it
-                next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
-
-                print(f"Scraping page {page}: found {len(current_urls)} images")
-                if next_button:
-                    next_button[0].click()
-                    page += 1
-                else:
-                    print(f"{YELLOW}Next button not found, end of the page{RESET}")
-                    break  # If no next button found, break the loop
-
-            album_title = normalize_alt_text(title)
-
-            # Add the URLs to the set for deduplication
-            unique_urls.update(all_urls)
-            total_images = len(unique_urls)
+            # Extract URLs from the current page and add them to the list
+            current_urls = extract_urls(driver)
+            all_urls.extend(current_urls)
             
-            print(f"{GREEN}Found: {total_images} Images{RESET}")
-            # Save the unique URLs to a file
-            save_urls_to_file(unique_urls, album_title)
+            # Find the next page button and click it
+            next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
 
-            output_download = f'images/{album_title}'
-            # Download images using aria2c
-            download_images(output_download, album_title)
+            print(f"Scraping page {page}: found {len(current_urls)} images")
+            if next_button:
+                next_button[0].click()
+                page += 1
+            else:
+                print(f"{YELLOW}Next button not found, end of the page{RESET}")
+                break  # If no next button found, break the loop
+
+        album_title = normalize_alt_text(title)
+
+        # Add the URLs to the set for deduplication
+        unique_urls.update(all_urls)
+        total_images = len(unique_urls)
+        
+        print(f"{GREEN}Found: {total_images} Images{RESET}")
+        # Save the unique URLs to a file
+        save_urls_to_file(unique_urls, album_title)
+
+        # output_download = f'images/{album_title}'
+        # # Download images using aria2c
+        # download_images(output_download, album_title)
 
         # Quit the driver
     driver.quit()
