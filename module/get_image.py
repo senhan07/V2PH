@@ -80,6 +80,7 @@ def get_image(album_url_folder, album_files, selected_index):
         for target_url in target_urls:
             target_url = target_url.strip()
 
+            # TODO: add ex. Progress (1/10) albums
             # Reset url set
             unique_urls = set()
 
