@@ -152,7 +152,7 @@ def get_image(album_url_folder, album_files, selected_index):
                 # Find the next page button and click it
                 next_button = driver.find_elements(By.XPATH, '//a[contains(text(), "Next")]')
 
-                print(f"Scraping page {page}")
+                print(f"SCRAPPING [PAGE {page}]: {target_url}")
                 if next_button:
                     next_button[0].click()
                     page += 1
@@ -161,12 +161,12 @@ def get_image(album_url_folder, album_files, selected_index):
                     break  # If no next button found, break the loop
 
             album_title = normalize_alt_text(title)
-            
+
             # Add the URLs to the set for deduplication
             unique_urls.update(all_urls)
             total_images = len(unique_urls)
             
-            print("Found:", {total_images}, "Images")
+            print(f"Found: {total_images} Images")
             # Save the unique URLs to a file
             save_urls_to_file(unique_urls, album_title)
 
