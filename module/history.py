@@ -53,7 +53,7 @@ def check_history(url):
             # URL exists in history, return user credentials
             user_data = credentials(user)
             username = user_data.get("Username")
-            print(f"{url} already viewed by {username}")
+            print(f"\n{url} already viewed by {username}")
             return username
     
     # URL not found in history, perform login
