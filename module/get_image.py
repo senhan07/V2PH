@@ -1,3 +1,4 @@
+import imp
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -5,8 +6,9 @@ from bs4 import BeautifulSoup
 import os
 from module.login import login, logout, login_with_random_account
 from module.download_image import download_images
-from module.history import check_history, visited_url
+from module.history import check_history, visited_url, write_album_title
 from module.driver import run_engine
+from module.user import credentials
 from module.colors import CYAN, GREEN, RED, YELLOW, RESET
 
 # Function to extract URLs from a page
@@ -98,11 +100,14 @@ def get_image(album_url_folder, album_files, selected_index):
     for target_url in target_urls:
         target_url = target_url.strip()
 
+        # todo: check album title
+
         # Reset url set
         unique_urls = set()
 
+        bypass = False
         #! Add the album url already exists or not
-        username = check_history(target_url.strip())
+        username, bypass = check_history(target_url.strip())
 
         while True:
             if username in successful_usernames:
@@ -118,9 +123,17 @@ def get_image(album_url_folder, album_files, selected_index):
             # Open the initial URL
             driver.get(target_url)
 
+            user_data = credentials(username)
+            token = user_data.get("Token")
 
             # Check if the account token has run out
             if driver.current_url == "https://www.v2ph.com/user/upgrade":
+                print(f"{YELLOW}Out of token, switching to another account{RESET}")
+                logout(driver)
+                # Remove the username from successful_usernames to prevent logging in with it again
+                successful_usernames.remove(username)
+                username = login_with_random_account()
+            elif not bypass and token == "0":
                 print(f"{YELLOW}Out of token, switching to another account{RESET}")
                 logout(driver)
                 # Remove the username from successful_usernames to prevent logging in with it again
@@ -131,7 +144,7 @@ def get_image(album_url_folder, album_files, selected_index):
                 title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
 
                 break  # Exit the loop if token is valid
-
+            
 
         # Print progress status
         print(f"\n{YELLOW}Progress: ({current_album} of {total_albums}) albums{RESET}")
@@ -149,6 +162,12 @@ def get_image(album_url_folder, album_files, selected_index):
                 #! Check if the account token run out
                 # Check if the account token has run out
                 if driver.current_url == "https://www.v2ph.com/user/upgrade":
+                    print(f"{YELLOW}Out of token, switching to another account{RESET}")
+                    logout(driver)
+                    # Remove the username from successful_usernames to prevent logging in with it again
+                    successful_usernames.remove(username)
+                    username = login_with_random_account()
+                elif not bypass and token == "0":
                     print(f"{YELLOW}Out of token, switching to another account{RESET}")
                     logout(driver)
                     # Remove the username from successful_usernames to prevent logging in with it again
@@ -186,6 +205,8 @@ def get_image(album_url_folder, album_files, selected_index):
         print(f"{GREEN}Found: {total_images} Images{RESET}")
         # Save the unique URLs to a file
         save_urls_to_file(unique_urls, album_title)
+        write_album_title(unique_urls, album_title)
+
 
         # output_download = f'images/{album_title}'
         # # Download images using aria2c
