@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from datetime import datetime
 import json
 import os
+from module.colors import GREEN, RED, YELLOW, RESET
 
 def update_token(driver, username):
     user_credentials = credentials(username)
@@ -11,7 +12,7 @@ def update_token(driver, username):
     try:
         value_span = driver.find_element(By.CLASS_NAME, "text-danger")
         new_token = value_span.text.strip()  # Extract the text inside the span tag
-        print(f"Token updated, Current Token: {new_token}")
+        print(f"{GREEN}Token updated, Current Token: {new_token}{RESET}")
 
         # Update the token value in the JSON data
         user_credentials["Token"] = new_token
@@ -23,7 +24,7 @@ def update_token(driver, username):
         with open(credentials_file, 'w') as file:
             json.dump(user_credentials, file, indent=4)
     except NoSuchElementException:
-        print("Unable to find token element.")
+        print(f"{RED}Unable to find token element.{RESET}")
 
 
 def reset_token(credentials, credentials_file):
@@ -44,7 +45,7 @@ def reset_token(credentials, credentials_file):
             # Write the updated JSON data back to the file
             with open(credentials_file, 'w') as file:
                 json.dump(credentials, file, indent=4)
-                print("Token reseted to 16 as last accessed more than 12 hours ago.\n")
+                print(f"{YELLOW}Token reseted to 16 as last accessed more than 12 hours ago.\n{RESET}")
 
 #! Get user credentials information
 def credentials(username):
@@ -78,5 +79,5 @@ def check_available_accounts():
                     username_token_pairs.append((username, int(token)))
 
     if not username_token_pairs:
-        print("Error: No more accounts with a token value greater than 0.")
+        print(f"{RED}Error: No more accounts with a token value greater than 0.{RESET}")
     return username_token_pairs

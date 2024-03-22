@@ -1,7 +1,7 @@
 import json
 from module.user import credentials
-from module.login import login, login_with_random_account
-from module.driver import run_engine
+from module.login import login_with_random_account
+from module.colors import GREEN, RED, YELLOW, RESET, CYAN
 
 # Function to write user information to JSON file
 def write_user_info(username, user_info):
@@ -30,15 +30,13 @@ def visited_url(url, username):
     if username in history:
         if url not in history[username]:
             history[username].append(url)
-            print("New Album viewed, Token decreased by 1")
-            print(f"{url} added to history on user {username}")
+            print(f"New Album viewed, {url} added to history on user {username}")
             user_info['Token'] = user_info['Token'] = str(max(0, int(user_token) - 1))
             write_user_info(username, user_info)
     else:
         history[username] = [url]
         user_info['Token'] = user_info['Token'] = str(max(0, int(user_token) - 1))
-        print("New Album viewed, Token decreased by 1")
-        print(f"{url} added to history on user {username}")
+        print(f"New Album viewed, {url} added to history on user {username}")
         write_user_info(username, user_info)
     write_history(history)
 
