@@ -60,12 +60,3 @@ def check_history(url):
     print(f"{url} not found on any accounts, trying to login with other account...")
     username = login_with_random_account()
     return username
-
-# Function to write URLs and titles to a JSON file
-def write_album_title(urls, album_title):
-    history_folder = "history"
-    os.makedirs(history_folder, exist_ok=True)
-    output_file = f"{history_folder}/album_title.json"
-    urls_list = list(urls)  # Convert set to list
-    with open(output_file, 'w', encoding='utf-8') as file:
-        json.dump({"album_title": album_title, "urls": urls_list}, file, indent=4)
