@@ -1,7 +1,3 @@
-import os
-import json
-
-from flask import redirect
 from module.download_image import download_images
 from module.user import reset_token
 from module.scrape_album import scrape_album
@@ -21,14 +17,6 @@ def print_banner():
     print(banner)
 
 while True:
-    # Reset all accounts token to 16 if the last accessed more than 12 hours with current time
-    json_files = [f for f in os.listdir("accounts") if f.endswith(".json")]
-    for json_file in json_files:
-        credentials_file = os.path.join("accounts", json_file)
-        with open(credentials_file, 'r') as file:
-            credentials = json.load(file)
-            reset_token(credentials, credentials_file)
-
     # Print banner
     print_banner()
 
