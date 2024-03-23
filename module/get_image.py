@@ -5,8 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import os
 from module.login import login, logout, login_with_random_account
-from module.download_image import download_images
-from module.history import check_history, visited_url, write_album_title
+from module.history import check_history, visited_url
 from module.driver import run_engine
 from module.user import credentials
 from module.colors import CYAN, GREEN, RED, YELLOW, RESET
@@ -97,11 +96,25 @@ def get_image(album_url_folder, album_files, selected_index):
     total_albums = len(target_urls)
     current_album = 1
 
+    # List to store URLs that haven't been scraped yet
+    remaining_urls = []
+
+    #! Check if the URL has already been scraped
     for target_url in target_urls:
         target_url = target_url.strip()
+        driver.get(target_url)
+        title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+        if os.path.exists(f"image_urls/{title}.txt"):
+            print(f"{title} already scrapped. {YELLOW}Skipping...{RESET}")
+            total_albums -= 1
+        else:
+            # If not already scraped, add it to the list of remaining URLs
+            remaining_urls.append(target_url)
 
-        # todo: check album title
-
+    #! Process url that haven't been scrapped
+    # Iterate over the remaining URLs
+    for target_url in remaining_urls:
+        target_url = target_url.strip()
         # Reset url set
         unique_urls = set()
 
@@ -202,11 +215,9 @@ def get_image(album_url_folder, album_files, selected_index):
         unique_urls.update(all_urls)
         total_images = len(unique_urls)
         
-        print(f"{GREEN}Found: {total_images} Images{RESET}")
+        print(f"{GREEN}Found:{RESET} {total_images} Images")
         # Save the unique URLs to a file
         save_urls_to_file(unique_urls, album_title)
-        write_album_title(unique_urls, album_title)
-
 
         # output_download = f'images/{album_title}'
         # # Download images using aria2c
