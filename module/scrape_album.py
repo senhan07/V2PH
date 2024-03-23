@@ -18,6 +18,7 @@ def extract_urls(driver):
 def scrape_album(driver, actor_name):
     base_url = "https://www.v2ph.com"
     target_url = f"https://www.v2ph.com/actor/{actor_name}"
+    # target_url = f"https://www.v2ph.com/search/?q={actor_name}"
 
     # Open the initial URL
     driver.get(target_url)
