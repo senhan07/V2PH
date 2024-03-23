@@ -6,31 +6,26 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from module.user import update_token, check_available_accounts, credentials
 from module.colors import GREEN, RED, YELLOW, RESET
+from selenium_recaptcha_solver import RecaptchaSolver
+
 
 def login_with_random_account():
     # Check available username with token at least 1
     all_username = check_available_accounts()
-    
-    # Separate usernames with "losenhan1" and others
-    losenhan1_accounts = [account for account in all_username if account[0] == "losenhan1"]
-    other_accounts = [account for account in all_username if account[0] != "losenhan1"]
-    
-    # Sort other accounts based on token value (highest to lowest)
-    other_accounts.sort(key=lambda x: x[1], reverse=True)
-    
-    # Combine "losenhan1" accounts and other accounts
-    prioritized_accounts = losenhan1_accounts + other_accounts
+    # Sort username_token_pairs based on token value (highest to lowest)
+    all_username.sort(key=lambda x: x[1], reverse=True)
 
-    if not prioritized_accounts:
+    if not all_username:
         print(f"{RED}Error: No more accounts with a token value greater than 0.{RESET}")
         return
 
-    # Get credentials of the account with the highest token value or "losenhan1" if available
-    username = prioritized_accounts[0][0]
+    # Get credentials of the account with the highest token value
+    username = all_username[0][0]
     return username
 
-
 def login(driver, username):
+    solver = RecaptchaSolver(driver=driver)
+
     driver.get("https://www.v2ph.com/login")
 
     user_data = credentials(username)
@@ -54,14 +49,32 @@ def login(driver, username):
     print(f"Password: {password}")
     print(f"Last Token: {token}")
 
+    time.sleep(3)
+    recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
+
+    retries = 0
+    max_retries = 15
+    while retries < max_retries:
+        try:
+            print(f"{YELLOW}Trying to Solving CAPTCHA... Attempt {retries + 1}/{max_retries}{RESET}")
+            solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+            break  # Exit the loop if successful
+        except Exception as e:
+            print(f"{RED}Error solving CAPTCHA: {e}{RESET}")
+            retries += 1
+            if retries < max_retries:
+                print("Retrying...")
+                driver.get("https://www.v2ph.com/signup")  # Reload the signup page
+                time.sleep(1)
+            else:
+                print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
+                return
+
     # Wait for a while to see the result
     driver.implicitly_wait(5)
 
-    print(f"\n{YELLOW}Solve CAPTCHA first, Press any key to continue...{RESET}")
-    input()
-    print("Trying to login...")
-
     time.sleep(1)
+    print("Trying to login...")
     login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
     login_button.click()
 
