@@ -27,7 +27,14 @@ def update_token(driver, username):
         print(f"{RED}Unable to find token element.{RESET}")
 
 
-def reset_token(credentials, credentials_file):
+def reset_token():
+    # Reset all accounts token to 16 if the last accessed more than 12 hours with current time
+    json_files = [f for f in os.listdir("accounts") if f.endswith(".json")]
+    for json_file in json_files:
+        credentials_file = os.path.join("accounts", json_file)
+        with open(credentials_file, 'r') as file:
+            credentials = json.load(file)
+
     # Check if "Last Accessed" field exists and if it's more than 12 hours ago
     last_accessed_str = credentials.get("Last Accessed")
     if last_accessed_str:
