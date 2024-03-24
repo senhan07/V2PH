@@ -119,7 +119,12 @@ def get_image(album_url_folder, album_files, selected_index):
         for target_url in target_urls:
             target_url = target_url.strip()
             driver.get(target_url)
-            title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
+            # Wait for the title meta tag to be present
+            title_element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]'))
+            )
+            title = title_element.get_attribute('content')
+            #  title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
             normalize_title = normalize_alt_text(title)
             if os.path.exists(f"image_url/{selected_filename}/{normalize_title}.txt"):
                 print(f"{normalize_title} already scraped. {YELLOW}Skipping...{RESET}")
@@ -165,6 +170,7 @@ def get_image(album_url_folder, album_files, selected_index):
                 user_data = credentials(username)
                 token = user_data.get("Token")
                 login(driver, username)
+                driver.get(target_url)
 
             # Print progress status
             print(f"\n{YELLOW}Progress: ({current_album} of {total_albums}) albums{RESET}")
@@ -185,6 +191,7 @@ def get_image(album_url_folder, album_files, selected_index):
                     user_data = credentials(username)
                     token = user_data.get("Token")
                     login(driver, username)
+                    driver.get(target_url)
 
                 visited_url(target_url, username)
                 # Wait for the page to fully load
@@ -244,7 +251,7 @@ def get_image(album_url_folder, album_files, selected_index):
             
             print(f"{GREEN}Found:{RESET} {total_images} Images")
             # Save the unique URLs to a file
-            save_urls_to_file(unique_urls, selected_file, album_title)
+            save_urls_to_file(unique_urls, selected_filename, album_title)
 
         driver.quit()
         break
