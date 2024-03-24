@@ -3,30 +3,48 @@ from tqdm import tqdm
 import subprocess
 from module.colors import GREEN, RED, YELLOW, RESET, CYAN
 
-# Function to choose an album file
-def choose_album():
-    image_url_folder = "image_urls"
-
-    # List all files in the "albums_url" folder
-    image_url_files = [f for f in os.listdir(image_url_folder) if f.endswith(".txt")]
-
-    # Display file list
-    print(f"\n{YELLOW}Select a file to download:{RESET}")
-    for i, file_name in enumerate(image_url_files):
-        print(f"{i+1}. {file_name}")
+def choose_album(current_folder="image_url"):
+    current_path = current_folder
+    all_files = []
+    all_folders = []
+    
+    # List files and folders in the current directory
+    for item in os.listdir(current_path):
+        full_path = os.path.join(current_path, item)
+        if os.path.isfile(full_path) and item.endswith(".txt"):
+            all_files.append(full_path)
+        elif os.path.isdir(full_path):
+            all_folders.append(full_path)
+    
+    # Display files and folders
+    print(f"\n{YELLOW}Current Folder: {current_path}{RESET}")
+    print(f"\n{YELLOW}Select a file or folder to explore, or 'A' to select all files:{RESET}")
+    print(f"{CYAN}0. Go back{RESET}")
+    for i, folder in enumerate(all_folders):
+        print(f"{i + 1}. {os.path.basename(folder)} (Folder)")
+    for j, file in enumerate(all_files):
+        print(f"{j + len(all_folders) + 1}. {os.path.basename(file)} (File)")
 
     while True:
-        choice = input(f"{CYAN}Enter the number of the file (A for all): {RESET}").strip()
+        choice = input(f"{CYAN}Enter the number of the file or folder, or 'A' to select all: {RESET}").strip()
         if choice.lower() == 'a':
-            return [os.path.join(image_url_folder, file) for file in image_url_files]
+            return all_files
+        elif choice == '0':
+            parent_folder = os.path.dirname(current_path)
+            if parent_folder != current_path:
+                return choose_album(parent_folder)
+            else:
+                print(f"{RED}You are already in the root folder.{RESET}")
         try:
             index = int(choice)
-            if 1 <= index <= len(image_url_files):
-                return os.path.join(image_url_folder, image_url_files[index - 1])
+            if 1 <= index <= len(all_folders):
+                return choose_album(all_folders[index - 1])
+            elif len(all_folders) < index <= len(all_folders) + len(all_files):
+                return [all_files[index - len(all_folders) - 1]]
             else:
-                print(f"{RED}Invalid selection. Please enter a valid number or 'A' for all.{RESET}")
+                print(f"{RED}Invalid selection. Please enter a valid number, 'A' to select all, or '0' to go back.{RESET}")
         except ValueError:
-            print(f"{RED}Invalid input. Please enter a number or 'A' for all.{RESET}")
+            print(f"{RED}Invalid input. Please enter a number, 'A' to select all, or '0' to go back.{RESET}")
 
 # Function to download images using aria2c with tqdm progress bar
 def download_images():
