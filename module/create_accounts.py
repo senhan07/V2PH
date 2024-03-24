@@ -1,3 +1,4 @@
+from math import log
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -26,14 +27,7 @@ def generate_username(email):
     username = email.split('@')[0]  # Take the part before the '@' symbol
     return username.replace('.', '').replace('+', '')
 
-def create_account(driver):
-    solver = RecaptchaSolver(driver=driver)
-    # Open the signup page
-    driver.get("https://www.v2ph.com/signup")
-
-    # Wait for the page to load
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "email")))
-
+def insert_credentials(driver):
     print("Generating Credentials...")
     # Generate random email, password, and username
     random_email = generate_email()
@@ -49,6 +43,19 @@ def create_account(driver):
 
     username_input = driver.find_element(By.ID, "username")
     username_input.send_keys(random_username)
+    return random_email, random_password, random_username
+
+def create_account(driver):
+    solver = RecaptchaSolver(driver=driver)
+    # Open the signup page
+    driver.get("https://www.v2ph.com/signup")
+    print("Creating account...")
+    # Wait for the page to load
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "email")))
+
+    random_email, \
+    random_password, \
+    random_username = insert_credentials(driver)
 
     recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
 
@@ -65,6 +72,12 @@ def create_account(driver):
             if retries < max_retries:
                 print("Retrying...")
                 driver.get("https://www.v2ph.com/signup")  # Reload the signup page
+                wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
+                wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
+                random_email, \
+                random_password, \
+                random_username = insert_credentials(driver)
+                solver.click_recaptcha_v2(iframe=recaptcha_iframe)
             else:
                 print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
                 return
@@ -111,3 +124,4 @@ def create_account(driver):
             print(f"{RED}Sign Up failed! Error: {error_message}{RESET}")
         except NoSuchElementException:
             print(f"{RED}Sign Up failed! Unable to retrieve error message.{RESET}")
+    return random_username
