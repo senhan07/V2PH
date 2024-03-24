@@ -20,6 +20,8 @@ while True:
     # Print banner
     print_banner()
 
+    reset_token()
+
     # Input choice
     print("1. Scrapping album URLs based on Model Names")
     print("2. Get Image URLs from albums")
