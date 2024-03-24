@@ -66,26 +66,26 @@ def download_single_album(album_file):
     os.makedirs(output_download, exist_ok=True)
 
     # Count the total number of lines in the input file to set the total number of downloads for tqdm
-    total_lines = sum(1 for line in open(album_file)) // 2
-
+    total_lines = sum(1 for line in open(album_file, encoding='utf-8')) // 2
 
     # Set up tqdm progress bar with speed indicator and unit "image"
     with tqdm(total=total_lines, desc=f"{GREEN}[DOWNLOADING]{RESET} {YELLOW}{album_title}{RESET}", unit="image", dynamic_ncols=True) as pbar:
         # List to store URLs that encounter errors
         error_urls = []
 
-        # Run aria2c command with subprocess
-        process = subprocess.Popen(["aria2c", "-i", album_file, "-j", "12", "--retry-wait=15", "--max-tries=10", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, universal_newlines=True)
+        process = subprocess.Popen(["aria2c", "-i", album_file, "-j", "12", "--retry-wait=15", "--max-tries=30", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Read stdout line by line
+        # Read and decode stdout and stderr line by line
         for stdout_line in process.stdout:
+            decoded_line = stdout_line.decode('utf-8', errors='ignore')
+            # print(decoded_line.strip())
             # Check if the line contains the "Download complete" status, indicating a successful download
-            if "Download complete" in stdout_line:
+            if "Download complete" in decoded_line:
                 # Update tqdm progress bar only for successful downloads
                 pbar.update(1)
-            elif "ERROR" in stdout_line:
+            elif "ERROR" in decoded_line:
                 # If error encountered, extract the URL from the error message and add it to error_urls list
-                url = stdout_line.split("=")[-1].strip()  # Extract URL by removing the "URI=" prefix
+                url = decoded_line.split("=")[-1].strip()  # Extract URL by removing the "URI=" prefix
                 error_urls.append(url)
                 print(f"{RED}[ERROR]{RESET} {url}")  # Print error message in red
                 
