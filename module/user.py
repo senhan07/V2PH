@@ -65,7 +65,7 @@ def credentials(username):
     return credentials
 
 #! Return username list with at least 1 token
-def check_available_accounts():
+def check_available_accounts(driver):
     # Get a list of JSON files in the accounts folder
     json_files = [f for f in os.listdir("accounts") if f.endswith(".json")]
 
@@ -85,6 +85,7 @@ def check_available_accounts():
                 if username:
                     username_token_pairs.append((username, int(token)))
 
-    if not username_token_pairs:
-        print(f"{RED}Error: No more accounts with a token value greater than 0.{RESET}")
+    # if not username_token_pairs:
+    #     print(f"{RED}Error: No more accounts with a token value greater than 0.{RESET}")
+    #     create_account(driver)
     return username_token_pairs
