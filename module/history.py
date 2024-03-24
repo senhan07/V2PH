@@ -53,10 +53,10 @@ def check_history(url):
             user_data = credentials(user)
             username = user_data.get("Username")
             print(f"\n{url} already viewed by {username}")
-            bypass = True
-            return username, bypass
+            return username
     
     # URL not found in history, perform login
     print(f"{url} not found on any accounts, trying to login with other account...")
     username = login_with_random_account()
     return username
+
