@@ -10,6 +10,8 @@ from module.user import credentials, reset_token
 from module.colors import CYAN, GREEN, RED, YELLOW, RESET
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from tabulate import tabulate
+
 
 # Function to extract URLs from a page
 def extract_urls(driver):
@@ -81,9 +83,31 @@ def choose_album():
     
     return album_url_folder, album_files, selected_index
 
+def out_of_token(driver, username, successful_usernames, target_url):
+    print(f"{RED}Out of token, switching to another account{RESET}")
+    logout(driver)
+    # Remove the username from successful_usernames to prevent logging in with it again
+    successful_usernames.remove(username)
+    username = login_with_random_account(driver)
+    user_data = credentials(username)
+    token = user_data.get("Token")
+    login(driver, username)
+    driver.get(target_url)
+
+def print_output(rows):
+    os.system('cls' if os.name == 'nt' else 'clear')  # Clear the console
+    # max_title_width = 100  # Define the maximum width for the title column
+    headers = ["URL", "STATUS", "TITLE"]
+    # formatted_rows = []
+    # for url, title, status_msg in rows:
+    #     # Truncate title if it exceeds the maximum width
+    #     truncated_title = title[:max_title_width] + ('...' if len(title) > max_title_width else '')
+    #     formatted_rows.append((url, truncated_title, status_msg))
+    print(tabulate(rows, headers=headers, tablefmt="plain"))
 
 
 def get_image(album_url_folder, album_files, selected_index):
+    OUTOFTOKEN_URL = "https://www.v2ph.com/user/upgrade"
     driver = run_engine()
     
     if selected_index is not None:
@@ -108,17 +132,27 @@ def get_image(album_url_folder, album_files, selected_index):
     total_albums = len(target_urls)
     current_album = 1
     remaining_urls = []
+    rows = []
 
     selected_filename = os.path.splitext(os.path.basename(selected_file))[0]
     # Check if the image_url folder is empty
     if not glob.glob(f"image_url/{selected_filename}/*.txt"):
         remaining_urls = target_urls
     else:
+        print("Checking existing scrapped URLs...")
         # Iterate over target URLs
         remaining_urls = []
         for target_url in target_urls:
             target_url = target_url.strip()
             driver.get(target_url)
+            pattern = re.compile(r"Page\s+not\s+found|404\s*-\s*Page\s+not\s+found|Error\s+404\s*:\s*Page\s+not\s+found")
+            if pattern.search(driver.page_source):
+                status_msg = f"{RED}Page Not Found{RESET}"
+                title = None
+                rows.append((target_url, status_msg, title))
+                print_output(rows)
+                total_albums -= 1
+                continue
             # Wait for the title meta tag to be present
             title_element = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]'))
@@ -127,11 +161,17 @@ def get_image(album_url_folder, album_files, selected_index):
             #  title = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute('content')
             normalize_title = normalize_alt_text(title)
             if os.path.exists(f"image_url/{selected_filename}/{normalize_title}.txt"):
-                print(f"{normalize_title} already scraped. {YELLOW}Skipping...{RESET}")
+                status_msg = f"{YELLOW}Already scraped{RESET}"
+                rows.append((target_url, status_msg, title))
+                print_output(rows)
+                # print(f"{normalize_title} already scraped. {YELLOW}Skipping...{RESET}")
                 total_albums -= 1
             else:
                 remaining_urls.append(target_url)
-
+                status_msg = f"{CYAN}Added to queue{RESET}"
+                rows.append((target_url, status_msg, title))
+                print_output(rows)
+        print(f"{GREEN}Checking completed{RESET}")
     #! Iterate over the remaining URLs
     while True:
         for target_url in remaining_urls:
@@ -145,8 +185,9 @@ def get_image(album_url_folder, album_files, selected_index):
             # token = user_data.get("Token")
 
             if username in successful_usernames:
+                pass
                 # If the username has been used successfully before, skip the login process
-                print(f"{YELLOW}Skipping login with username {username} as it has been used successfully before.{RESET}")
+                # print(f"{YELLOW}Skipping login with username {username} as it has been used successfully before.{RESET}")
             else:
                 # If the username has not been used successfully before, attempt login
                 logout(driver)
@@ -161,16 +202,17 @@ def get_image(album_url_folder, album_files, selected_index):
             driver.get(target_url)
 
             # Check if the account token has run out
-            if driver.current_url == "https://www.v2ph.com/user/upgrade" or token == "0":
-                print(f"{YELLOW}Out of token, switching to another account{RESET}")
-                logout(driver)
-                # Remove the username from successful_usernames to prevent logging in with it again
-                successful_usernames.remove(username)
-                username = login_with_random_account(driver)
-                user_data = credentials(username)
-                token = user_data.get("Token")
-                login(driver, username)
-                driver.get(target_url)
+            if driver.current_url == OUTOFTOKEN_URL or token == "0":
+                out_of_token(driver, username, successful_usernames, target_url)
+                # print(f"{RED}Out of token, switching to another account{RESET}")
+                # logout(driver)
+                # # Remove the username from successful_usernames to prevent logging in with it again
+                # successful_usernames.remove(username)
+                # username = login_with_random_account(driver)
+                # user_data = credentials(username)
+                # token = user_data.get("Token")
+                # login(driver, username)
+                # driver.get(target_url)
 
             # Print progress status
             print(f"\n{YELLOW}Progress: ({current_album} of {total_albums}) albums{RESET}")
@@ -182,16 +224,17 @@ def get_image(album_url_folder, album_files, selected_index):
             #! Starting individual page scrapping
             while True:
                 #! Check if the account token run out
-                if driver.current_url == "https://www.v2ph.com/user/upgrade" or token == "0":
-                    print(f"{RED}Out of token, switching to another account{RESET}")
-                    logout(driver)
-                    # Remove the username from successful_usernames to prevent logging in with it again
-                    successful_usernames.remove(username)
-                    username = login_with_random_account(driver)
-                    user_data = credentials(username)
-                    token = user_data.get("Token")
-                    login(driver, username)
-                    driver.get(target_url)
+                if driver.current_url == OUTOFTOKEN_URL or token == "0":
+                    out_of_token(driver, username, successful_usernames, target_url)
+                #     print(f"{RED}Out of token, switching to another account{RESET}")
+                #     logout(driver)
+                #     # Remove the username from successful_usernames to prevent logging in with it again
+                #     successful_usernames.remove(username)
+                #     username = login_with_random_account(driver)
+                #     user_data = credentials(username)
+                #     token = user_data.get("Token")
+                #     login(driver, username)
+                #     driver.get(target_url)
 
                 visited_url(target_url, username)
                 # Wait for the page to fully load
@@ -231,13 +274,14 @@ def get_image(album_url_folder, album_files, selected_index):
                     #     pass  # Do nothing and continue with the execution
 
                     #! Check if the account token run out
-                    if driver.current_url == "https://www.v2ph.com/user/upgrade" or token == "0":
-                        print(f"{RED}Out of token, switching to another account{RESET}")
-                        logout(driver)
-                        # Remove the username from successful_usernames to prevent logging in with it again
-                        successful_usernames.remove(username)
-                        username = login_with_random_account(driver)
-                        login(driver, username)   
+                    if driver.current_url == OUTOFTOKEN_URL or token == "0":
+                        out_of_token(driver, username, successful_usernames, target_url)
+                        # print(f"{RED}Out of token, switching to another account{RESET}")
+                        # logout(driver)
+                        # # Remove the username from successful_usernames to prevent logging in with it again
+                        # successful_usernames.remove(username)
+                        # username = login_with_random_account(driver)
+                        # login(driver, username)   
                     else:
                         page += 1
                 else:
