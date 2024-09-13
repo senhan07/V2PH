@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import os
 import re
 import glob
-from module import driver
 from module.login import login, logout, login_with_random_account
 from module.history import visited_url, read_history
 from module.driver import run_engine

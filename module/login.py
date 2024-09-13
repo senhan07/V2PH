@@ -7,7 +7,6 @@ import time
 from module.user import update_token, check_available_accounts, credentials
 from module.create_accounts import create_account
 from module.colors import GREEN, RED, YELLOW, RESET
-from selenium_recaptcha_solver import RecaptchaSolver
 
 
 def login_with_random_account(driver):

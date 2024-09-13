@@ -1,8 +1,6 @@
 import json
 from module.user import credentials
 from module.login import login_with_random_account
-from module.colors import GREEN, RED, YELLOW, RESET, CYAN
-import os
 
 # Function to write user information to JSON file
 def write_user_info(username, user_info):

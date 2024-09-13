@@ -7,9 +7,7 @@ import random
 import string
 import os
 import json
-import time
 from datetime import datetime
-from selenium_recaptcha_solver import RecaptchaSolver
 from module.colors import GREEN, RED, YELLOW, RESET
 
 # Function to generate a random email address
@@ -46,7 +44,6 @@ def insert_credentials(driver):
     return random_email, random_password, random_username
 
 def create_account(driver):
-    solver = RecaptchaSolver(driver=driver)
     # Open the signup page
     driver.get("https://www.v2ph.com/signup")
     print("Creating account...")
