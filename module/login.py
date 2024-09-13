@@ -48,64 +48,105 @@ def insert_credentials(driver, username):
     print(f"Last Token: {token}")
 
 
-def login(driver, username):
-    # solver = RecaptchaSolver(driver=driver)
+# def login(driver, username):
+#     # solver = RecaptchaSolver(driver=driver)
 
-    if driver.current_url == "https://www.v2ph.com/login":
-        pass
-    else:
-        driver.get("https://www.v2ph.com/login")
+#     if driver.current_url == "https://www.v2ph.com/login":
+#         pass
+#     else:
+#         driver.get("https://www.v2ph.com/login")
     
-    wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
-    wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
+#     wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
+#     wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
 
-    insert_credentials(driver, username)
+#     insert_credentials(driver, username)
 
-    # recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
+#     recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
 
-    # retries = 0
-    # max_retries = 15
-    # while retries < max_retries:
-    #     try:
-    #         print(f"{YELLOW}Trying to Solving CAPTCHA... Attempt {retries + 1}/{max_retries}{RESET}")
-    #         time.sleep(1)
-    #         solver.click_recaptcha_v2(iframe=recaptcha_iframe)
-    #         break  # Exit the loop if successful
-    #     except Exception as e:
-    #         print(f"{RED}Error solving CAPTCHA: {e}{RESET}")
-    #         retries += 1
-    #         if retries < max_retries:
-    #             print("Retrying...")
-    #             driver.get("https://www.v2ph.com/login")  # Reload the signup page
-    #             wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
-    #             wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
-    #             insert_credentials(driver, username)
-    #             time.sleep(1)
-    #             solver.click_recaptcha_v2(iframe=recaptcha_iframe)
-    #         else:
-    #             print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
-    #             return
+#     retries = 0
+#     max_retries = 15
+#     while retries < max_retries:
+#         try:
+#             print(f"{YELLOW}Trying to Solving CAPTCHA... Attempt {retries + 1}/{max_retries}{RESET}")
+#             time.sleep(1)
+#             solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+#             break  # Exit the loop if successful
+#         except Exception as e:
+#             print(f"{RED}Error solving CAPTCHA: {e}{RESET}")
+#             retries += 1
+#             if retries < max_retries:
+#                 print("Retrying...")
+#                 driver.get("https://www.v2ph.com/login")  # Reload the signup page
+#                 wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
+#                 wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
+#                 insert_credentials(driver, username)
+#                 time.sleep(1)
+#                 solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+#             else:
+#                 print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
+#                 return
 
-    # Wait for a while to see the result
-    driver.implicitly_wait(5)
+#     # Wait for a while to see the result
+#     driver.implicitly_wait(5)
 
-    print("Trying to login...")
-    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
-    login_button.click()
+#     print("Trying to login...")
+#     login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
+#     login_button.click()
 
-    driver.get("https://www.v2ph.com/user/index")
-    if driver.current_url == "https://www.v2ph.com/user/index":
-        print(f"{GREEN}Login successful!{RESET}")
-        # Update token only if login successful
-        update_token(driver, username)
-    else:
-        try:
-            error_message = driver.find_element(By.CLASS_NAME, "errorMessage").text
-            print(f"{RED}Login failed! Error: {error_message}{RESET}")
-        except NoSuchElementException:
-            print(f"{RED}Login failed! Unable to retrieve error message.{RESET}")
-    return username
+#     driver.get("https://www.v2ph.com/user/index")
+#     if driver.current_url == "https://www.v2ph.com/user/index":
+#         print(f"{GREEN}Login successful!{RESET}")
+#         # Update token only if login successful
+#         update_token(driver, username)
+#     else:
+#         try:
+#             error_message = driver.find_element(By.CLASS_NAME, "errorMessage").text
+#             print(f"{RED}Login failed! Error: {error_message}{RESET}")
+#         except NoSuchElementException:
+#             print(f"{RED}Login failed! Unable to retrieve error message.{RESET}")
+#     return username
 
+def login(driver, username, max_retries=5):
+    retry_count = 0
+    login_url = "https://www.v2ph.com/login"
+    
+    while retry_count < max_retries:
+        if driver.current_url != login_url:
+            driver.get(login_url)
+
+        wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
+        wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
+
+        insert_credentials(driver, username)
+
+        # Attempt to login
+        driver.implicitly_wait(5)
+        print("Trying to login...")
+        login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
+        login_button.click()
+
+        driver.get("https://www.v2ph.com/user/index")
+        if driver.current_url == "https://www.v2ph.com/user/index":
+            print(f"{GREEN}Login successful!{RESET}")
+            # Update token only if login is successful
+            update_token(driver, username)
+            return username  # Exit if login is successful
+        else:
+            try:
+                error_message = driver.find_element(By.CLASS_NAME, "errorMessage").text
+                print(f"{RED}Login failed! Error: {error_message}{RESET}")
+            except NoSuchElementException:
+                print(f"{RED}Login failed! Unable to retrieve error message.{RESET}")
+        
+        retry_count += 1
+        print(f"{YELLOW}Retrying login attempt {retry_count} of {max_retries}...{RESET}")
+        time.sleep(2)  # Delay before retrying
+    
+    # If all attempts fail
+    print(f"{RED}Login failed after {max_retries} attempts. Exiting...{RESET}")
+    driver.quit()
+    exit(1)
+    
 def logout(driver):
     print("Trying to logout...")
     driver.get("https://www.v2ph.com/user/logout")
