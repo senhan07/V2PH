@@ -109,6 +109,7 @@ def print_output(rows):
 
 def get_image(album_url_folder, album_files, selected_index):
     OUTOFTOKEN_URL = "https://www.v2ph.com/user/upgrade"
+    username = None
     driver = run_engine()
     
     if selected_index is not None:
