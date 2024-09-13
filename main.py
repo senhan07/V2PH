@@ -23,7 +23,7 @@ while True:
     reset_token()
 
     # Input choice
-    print("1. Scrapping album URLs based on Model Names")
+    print("1. Scrapping album from URL")
     print("2. Get Image URLs from albums")
     print("3. Download images from URLs .txt")
     print(f"{RED}4. Exit{RESET}")
@@ -31,9 +31,9 @@ while True:
     choice = input(f"{CYAN}Enter your choice: {RESET}")
 
     if choice == "1":
-        actor_name = input("Input the Girl Name: ")
+        url = input("Input the URL: ")
         driver = run_engine()
-        scrape_album(driver, actor_name)
+        scrape_album(driver, url)
     
     elif choice == "2":
         album_url_folder, \
