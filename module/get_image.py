@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import os
 import re
 import glob
+from module import driver
 from module.login import login, logout, login_with_random_account
 from module.history import visited_url, read_history
 from module.driver import run_engine
@@ -11,6 +12,7 @@ from module.colors import CYAN, GREEN, RED, YELLOW, RESET
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tabulate import tabulate
+from selenium.webdriver.common.by import By
 
 
 # Function to extract URLs from a page
@@ -202,7 +204,7 @@ def get_image(album_url_folder, album_files, selected_index):
             driver.get(target_url)
 
             # Check if the account token has run out
-            if driver.current_url == OUTOFTOKEN_URL or token == "0":
+            if driver.current_url == OUTOFTOKEN_URL:
                 out_of_token(driver, username, successful_usernames, target_url)
                 # print(f"{RED}Out of token, switching to another account{RESET}")
                 # logout(driver)
@@ -224,7 +226,9 @@ def get_image(album_url_folder, album_files, selected_index):
             #! Starting individual page scrapping
             while True:
                 #! Check if the account token run out
-                if driver.current_url == OUTOFTOKEN_URL or token == "0":
+                user_data = credentials(username)
+                token = user_data.get("Token")
+                if driver.current_url == OUTOFTOKEN_URL:
                     out_of_token(driver, username, successful_usernames, target_url)
                 #     print(f"{RED}Out of token, switching to another account{RESET}")
                 #     logout(driver)
@@ -274,7 +278,9 @@ def get_image(album_url_folder, album_files, selected_index):
                     #     pass  # Do nothing and continue with the execution
 
                     #! Check if the account token run out
-                    if driver.current_url == OUTOFTOKEN_URL or token == "0":
+                    user_data = credentials(username)
+                    token = user_data.get("Token")
+                    if driver.current_url == OUTOFTOKEN_URL:
                         out_of_token(driver, username, successful_usernames, target_url)
                         # print(f"{RED}Out of token, switching to another account{RESET}")
                         # logout(driver)
