@@ -13,17 +13,19 @@ F4CK V2PH is a script for scraping images from the V2PH website. It supports alb
 - **Retrieve Image URLs from Albums**: Fetch individual image URLs after scraping albums.
 - **Download Images**: Download images from URLs specified in a `.txt` file.
 
+---
+
 ### Demo
 #### Scrapping albums
 The output will be saved on `albums_url/[NAME].txt`  
 Example `albums_url\2024-03-22_Jangjoo.txt`
 ```
-https://www.v2ph.com/album/ArtGravia-466
-https://www.v2ph.com/album/z7n34n5a.html
 https://www.v2ph.com/album/a9m6e8oa.html
 https://www.v2ph.com/album/an3nx54z.html
 https://www.v2ph.com/album/z69nxe8a.html
 ```
+
+---
 
 #### Scrapping images
 The output will be saved on `image_url/[NAMES]/[ALBUM_TITLE].txt`  
@@ -36,7 +38,12 @@ https://cdn.v2ph.com/photos/UMRnw_W4l9rOsTru.jpg
 https://cdn.v2ph.com/photos/EwVJlPhy88rHjMFY.jpg
     out=[ArtGravia] VOL.162 Jang Joo 15.jpg
 ```
-<video controls src="docs/menu-2.mp4" title="Title"></video>
+> [!NOTE] 
+> You can turn off the headless mode by change into `headless=False` on `module > driver.py`
+
+https://github.com/user-attachments/assets/841214ec-39b7-4c10-97e6-afbe275ce83c
+
+---
 
 #### Downloading images
 The output will be saved on `images\[NAME]\[NAME.jpg]`  
@@ -45,13 +52,43 @@ Example `images\[ArtGravia] VOL.154 Jang Joo`
 images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 0.jpg
 images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 1.jpg
 images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 2.jpg
-images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 3.jpg
-images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 4.jpg
 ```
-<video controls src="docs/menu-3.mp4" title="Title"></video>
+https://github.com/user-attachments/assets/4332cce7-7418-4bac-9a07-0f544aad4932
 
-> [!CAUTION] 
-> The browser window must remain open and visible. It cannot be minimized during scrapping
+## Prerequisites
+- **Python 3.8+** (Tested on Python `3.10.9`)
+- **Google Chrome** (Tested on version `128.0.6613.138`)
+- **aria2c** (Tested on version `1.37.0`)
+
+
+## Installation
+
+1. Clone this repository:
+```
+git clone https://github.com/senhan07/V2PH.git
+```
+
+2. Navigate to the project directory:
+```
+cd V2PH
+```
+
+3. Install the required packages:  
+   Recomended using virtual enviroment <i>(optional)</i>
+   ```
+   python -m venv venv
+   .\venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+   or without it
+   ```
+   pip install -r requirements.txt
+   ```
+
+5. Run
+```
+python main.py
+```
 
 ## Notes
 - Each account has 16 tokens, which reset every 24 hours.
@@ -65,11 +102,6 @@ images\[ArtGravia] VOL.154 Jang Joo\[ArtGravia] VOL.154 Jang Joo 4.jpg
 - [ ] Implement proxy support for IP rotation.
 - [x] Bypass Cloudflare Turnstile.
 - [x] ~~Bypass Captcha with RecaptchaSolver~~.
-
-## Prerequisites
-- **Python 3.8+** (Tested on Python `3.10.9`)
-- **Google Chrome** (Tested on version `128.0.6613.138`)
-- **aria2c** (Tested on version `1.37.0`)
 
 ## Disclaimer
 This script is purely intended for practicing my programming and logic skills, not because of any personal interest in the content itself.
