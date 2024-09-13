@@ -57,35 +57,34 @@ def create_account(driver):
     random_password, \
     random_username = insert_credentials(driver)
 
-    recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
-
-    retries = 0
-    max_retries = 5
-    while retries < max_retries:
-        try:
-            print(f"{YELLOW}Trying to Solving CAPTCHA... Attempt {retries + 1}/{max_retries}{RESET}")
-            solver.click_recaptcha_v2(iframe=recaptcha_iframe)
-            break  # Exit the loop if successful
-        except Exception as e:
-            print(f"{RED}Error solving CAPTCHA: {e}{RESET}")
-            retries += 1
-            if retries < max_retries:
-                print("Retrying...")
-                driver.get("https://www.v2ph.com/signup")  # Reload the signup page
-                wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
-                wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
-                random_email, \
-                random_password, \
-                random_username = insert_credentials(driver)
-                solver.click_recaptcha_v2(iframe=recaptcha_iframe)
-            else:
-                print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
-                return
+    # recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="reCAPTCHA"]')
+    # 
+    # retries = 0
+    # max_retries = 5
+    # while retries < max_retries:
+    #     try:
+    #         print(f"{YELLOW}Trying to Solving CAPTCHA... Attempt {retries + 1}/{max_retries}{RESET}")
+    #         solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+    #         break  # Exit the loop if successful
+    #     except Exception as e:
+    #         print(f"{RED}Error solving CAPTCHA: {e}{RESET}")
+    #         retries += 1
+    #         if retries < max_retries:
+    #             print("Retrying...")
+    #             driver.get("https://www.v2ph.com/signup")  # Reload the signup page
+    #             wait = WebDriverWait(driver, 10)  # Adjust the timeout as needed
+    #             wait.until(EC.presence_of_element_located((By.XPATH, "//body")))  # Wait until the body element is present
+    #             random_email, \
+    #             random_password, \
+    #             random_username = insert_credentials(driver)
+    #             solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+    #         else:
+    #             print(f"{RED}Maximum retries exceeded. Aborting.{RESET}")
+    #             return
 
     # Wait for a while to see the result
     driver.implicitly_wait(5)
 
-    time.sleep(1)
     signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign Up')]")
     signup_button.click()
 
