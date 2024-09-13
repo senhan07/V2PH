@@ -4,7 +4,7 @@ def run_engine():
     print("\nStarting chrome engine...")
 
     # Initialize the driver instance
-    driver = Driver(uc=True, headless=False,)
+    driver = Driver(uc=True, headless=True,)
     return driver
 
 def solve_turnstile(driver):
