@@ -1,0 +1,6 @@
+beautifulsoup4
+Requests
+selenium
+seleniumbase
+tabulate
+tqdm
