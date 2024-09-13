@@ -73,7 +73,7 @@ def download_single_album(album_file):
         # List to store URLs that encounter errors
         error_urls = []
 
-        process = subprocess.Popen(["aria2c", "-i", album_file, "-j", "12", "--retry-wait=15", "--max-tries=30", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(["aria2c", "-i", album_file, "-j", "8", "--retry-wait=15", "--max-tries=30", "--auto-file-renaming=false", "--referer", "https://www.v2ph.com", "-d", output_download], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Read and decode stdout and stderr line by line
         for stdout_line in process.stdout:
