@@ -1,4 +1,5 @@
 import json
+import os
 from module.user import credentials
 from module.login import login_with_random_account
 
@@ -17,7 +18,21 @@ def read_history():
 
 # Function to write history to JSON file
 def write_history(history):
-    with open('history/history.json', 'w') as file:
+    # Define the folder and file paths
+    folder = 'history'
+    file_path = os.path.join(folder, 'history.json')
+    
+    # Check if the folder exists, if not, create it
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+    # Check if the file exists, if not, create an empty JSON file
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as file:
+            json.dump({}, file)  # Writing an empty dictionary if the file doesn't exist
+    
+    # Write the history data to the file
+    with open(file_path, 'w') as file:
         json.dump(history, file, indent=4)
     
 # Function to update history for a user with a visited URL
