@@ -15,13 +15,12 @@ def extract_urls(driver):
     urls = [tag['href'] for tag in a_tags]
     return urls
 
-def scrape_album(driver, actor_name):
+def scrape_album(driver, url):
     base_url = "https://www.v2ph.com"
-    target_url = f"https://www.v2ph.com/actor/{actor_name}"
-    # target_url = f"https://www.v2ph.com/search/?q={actor_name}"
-
+    actor_name = url.split('/')[-1]
+    
     # Open the initial URL
-    driver.get(target_url)
+    driver.get(url)
 
     # Initialize a list to store all URLs
     all_urls = []
